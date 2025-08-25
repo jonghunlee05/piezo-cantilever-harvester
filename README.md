@@ -25,7 +25,7 @@ This project focuses on designing and analyzing a piezoelectric cantilever beam 
 ## Milestone 0 – Setup Checklist
 
 **Software Requirements (tick if you have it):**
-- [ ] SolidWorks installed
+- [ ] SolidWorks installed (use OnShape for free version)
 - [ ] ANSYS Workbench (with Piezo coupling) installed
 - [ ] A place to save results (this folder)
 

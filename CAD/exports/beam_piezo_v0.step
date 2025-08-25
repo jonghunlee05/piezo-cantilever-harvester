@@ -10,8 +10,8 @@ FILE_DESCRIPTION(
 /* implementation_level */ '2;1');
 
 FILE_NAME(
-/* name */ '68ac838c9d03415eb05d1717',
-/* time_stamp */ '2025-08-25T15:38:53Z',
+/* name */ '68acaaa1c027d300461f8121',
+/* time_stamp */ '2025-08-25T18:25:38Z',
 /* author */ (''),
 /* organization */ (''),
 /* preprocessor_version */ 'ST-DEVELOPER v20',
@@ -440,3 +440,11 @@ SI_UNIT($,.METRE.)
 'core data for automotive mechanical design processes');
 ENDSEC;
 END-ISO-10303-21;
+//+
+Physical Volume("Substrate", 25) = {1};
+//+
+Physical Volume("Piezo", 25) = {2};
+//+
+Physical Volume("Piezo", 25) += {2, 1};
+//+
+Physical Volume("Piezo", 25) += {2};
