@@ -1,0 +1,22 @@
+!------ Skeleton for body section -----
+Body 1
+  Name = Substrate
+End
+
+Body 2
+  Name = Piezo
+End
+
+!------ Skeleton for boundary section -----
+Boundary Condition 1
+  Name = Top_Electrode
+End
+
+Boundary Condition 2
+  Name = Bottom_Electrode
+End
+
+Boundary Condition 3
+  Name = Root_Fixed
+End
+
