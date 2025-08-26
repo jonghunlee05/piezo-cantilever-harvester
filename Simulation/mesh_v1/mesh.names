@@ -1,0 +1,7 @@
+! ----- names for bodies -----
+$ Substrate = 1
+$ Piezo = 2
+! ----- names for boundaries -----
+$ Root_Fixed = 1
+$ Top_Electrode = 2
+$ Bottom_Electrode = 3
