@@ -1,0 +1,137 @@
+Header
+  CHECK KEYWORDS Warn
+  Mesh DB "." "."
+End
+
+Simulation
+  Coordinate System = Cartesian 3D
+  Simulation Type = Eigenvalue analysis
+  Steady State Max Iterations = 1
+  Output File = "piezo_eigen"
+  Post File = "modes.vtu"
+End
+
+Solver 1
+  Equation = "Stress Analysis"
+  Procedure = "StressSolve" "StressSolver"
+  
+  Variable = "Displacement"
+  Variable DOFs = 3
+  Calculate Stresses = True
+  
+  Linear System Solver = Iterative
+  Linear System Iterative Method = BiCGStab
+  Linear System Preconditioning = ILU0
+  Linear System Convergence Tolerance = 1.0e-8
+  Linear System Max Iterations = 500
+  
+  Eigen Analysis = True
+  Eigen System Values = 10
+  Eigen System Convergence Tolerance = 1.0e-8
+  Eigen System Max Iterations = 200
+  Eigen System Shift = 1.0
+  
+  Exec Solver = Before Timestep
+End
+
+Solver 2
+  Equation = "Electrostatics"
+  Procedure = "StatElecSolve" "StatElecSolver"
+  
+  Variable = "Potential"
+  Variable DOFs = 1
+  
+  Linear System Solver = Iterative
+  Linear System Iterative Method = BiCGStab
+  Linear System Preconditioning = ILU0
+  Linear System Convergence Tolerance = 1.0e-8
+  Linear System Max Iterations = 500
+  
+  Exec Solver = Before Timestep
+End
+
+Solver 3
+  Equation = "ResultOutput"
+  Procedure = "ResultOutputSolve" "ResultOutputSolver"
+  Output File Name = "mode"
+  Output Format = VTK
+  Binary Output = False
+  Exec Solver = After Timestep
+End
+
+Equation 1
+  Name = "Piezoelectric"
+  Active Solvers(3) = 1 2 3
+  Stress Analysis = True
+End
+
+! Substrate (Silicon)
+Material 1
+  Name = "Silicon"
+  Density = 2330.0
+  Youngs Modulus = 170.0e9
+  Poisson Ratio = 0.28
+End
+
+! Piezoelectric Layer (PZT-5H)
+Material 2
+  Name = "PZT-5H"
+  Density = 7500.0
+  PiezoMaterial = Logical True
+  
+  ! Elastic stiffness matrix (C, in Voigt notation, Pa)
+  Elasticity Matrix(6,6) = Real
+    1.264e11   8.79e10   8.41e10   0.0       0.0       0.0
+    8.79e10    1.264e11  8.41e10   0.0       0.0       0.0
+    8.41e10    8.41e10   1.171e11  0.0       0.0       0.0
+    0.0        0.0       0.0       2.30e10   0.0       0.0
+    0.0        0.0       0.0       0.0       2.30e10   0.0
+    0.0        0.0       0.0       0.0       0.0       1.93e10
+  End
+  
+  ! Piezoelectric coupling matrix (e, C/m²)
+  PiezoCoeff = Real
+    0.0      0.0      0.0      0.0    17.0    0.0
+    0.0      0.0      0.0      17.0   0.0     0.0
+   -6.5     -6.5     23.3     0.0    0.0     0.0
+  End
+  
+  ! Permittivity matrix (ε, F/m)
+  Permittivity Matrix(3,3) = Real
+    1.5e-8   0.0      0.0
+    0.0      1.5e-8   0.0
+    0.0      0.0      1.3e-8
+  End
+End
+
+Body 1
+  Target Bodies(1) = 25
+  Equation = 1
+  Material = 1
+End
+
+Body 2
+  Target Bodies(1) = 26
+  Equation = 1
+  Material = 2
+End
+
+Boundary Condition 1
+  Name = "ClampRoot"
+  Target Boundaries(1) = 29
+  Displacement 1 = 0
+  Displacement 2 = 0
+  Displacement 3 = 0
+End
+
+Boundary Condition 2
+  Name = "TopElectrode"
+  Target Boundaries(1) = 27
+  Potential = 0
+End
+
+Boundary Condition 3
+  Name = "BottomElectrode"
+  Target Boundaries(1) = 28
+  Potential = 1
+End
