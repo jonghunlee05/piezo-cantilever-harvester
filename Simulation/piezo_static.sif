@@ -5,12 +5,12 @@ End
 
 Simulation
   Coordinate System = Cartesian 3D
-  Simulation Type = Steady state
+  Simulation Type   = Steady state
   Steady State Max Iterations = 1
   Output File = "piezo_static"
 End
 
-! ------------------ SOLVERS ------------------
+! --------- SOLVERS (mechanics first, then electrostatics) ---------
 Solver 1
   Equation = "Stress Analysis"
   Procedure = "StressSolve" "StressSolver"
@@ -39,71 +39,67 @@ Solver 3
   Procedure = "ResultOutputSolve" "ResultOutputSolver"
   Output File Name = "piezo_static"
   Output Format = VTU
-  Binary Output = Logical False
+  Binary Output  = Logical False
   Exec Solver = After Timestep
 End
 
-! ------------------ EQUATION SET ------------------
+! --------- EQUATION SET ---------
 Equation 1
   Name = "PiezoCoupled"
   Active Solvers(2) = 1 2
   Stress Analysis = Logical True
 End
 
-! ------------------ MATERIALS ------------------
-! Substrate (update if not steel)
-Material 1
-  Youngs Modulus       = 200.0e9
-  Poisson Ratio        = 0.30
-  Density              = 7800.0
+! --------- MATERIALS ---------
+Material 1   ! Substrate
+  Name              = "Substrate"
+  Youngs Modulus    = 200.0e9
+  Poisson Ratio     = 0.30
+  Density           = 7800.0
   Relative Permittivity = 1.0
 End
 
-! PZT layer (poling along +Z). Coefficients in C/m^2 (typical ballparks).
-! e-matrix maps Voigt strains [S11 S22 S33 S23 S13 S12] to D = e * S.
-!     [ 0    0    0    0    e15  0  ]
-! e = [ 0    0    0    e15  0    0  ]
-!     [ e31 e31  e33   0    0    0  ]
-Material 2
-  Youngs Modulus       = 60.0e9
-  Poisson Ratio        = 0.31
-  Density              = 7500.0
+Material 2   ! PZT layer (poling +Z). Piezo matrix is (Dim, 2*Dim) = (3,6)
+  Name              = "PZT-5H"
+  Density           = 7500.0
+  Youngs Modulus    = 60.0e9
+  Poisson Ratio     = 0.31
   Relative Permittivity = 1700.0
 
+  ! Piezoelectric coefficients (e-matrix, C/m^2), Voigt columns [S11 S22 S33 S23 S13 S12]
+  ! Nonzeros for 6mm: e15, e31, e33 (ballpark values)
   Piezo Material Coefficients(3,6) = Real \
-     0.0    0.0   0.0    0.0   12.0   0.0 \
-     0.0    0.0   0.0   12.0   0.0    0.0 \
-    -6.0   -6.0  15.0    0.0    0.0    0.0
+     0.0     0.0     0.0     0.0   12.0    0.0 \
+     0.0     0.0     0.0    12.0    0.0    0.0 \
+    -6.0    -6.0    15.0     0.0    0.0    0.0
 End
 
-! ------------------ BODY FORCES ------------------
-! BF1: enable piezo coupling on the PZT + add a small vertical body force
-Body Force 1
-  Piezo Material = Logical True
-  Stress Bodyforce 2 = -1.0e6   ! N/m^3, bends beam in -Y (adjust as needed)
+! --------- BODY FORCES ---------
+! Small vertical body force to bend the beam (so you see displacement & piezo response)
+Body Force 1   ! on PZT
+  Piezo Material     = Logical True
+  Stress Bodyforce 2 = -1.0e6     ! N/m^3
 End
-
-! BF2: same mechanical body force for the substrate
-Body Force 2
+Body Force 2   ! on substrate
   Stress Bodyforce 2 = -1.0e6
 End
 
-! ------------------ BODIES ------------------
-Body 1    ! Substrate
+! --------- BODIES ---------
+Body 1
   Target Bodies(1) = 1
   Equation = 1
   Material = 1
   Body Force = 2
 End
 
-Body 2    ! PZT
+Body 2
   Target Bodies(1) = 2
   Equation = 1
   Material = 2
   Body Force = 1
 End
 
-! ------------------ BOUNDARIES ------------------
+! --------- BOUNDARY CONDITIONS ---------
 Boundary Condition 1
   Name = "ClampRoot"
   Target Boundaries(1) = 3
@@ -114,12 +110,12 @@ End
 
 Boundary Condition 2
   Name = "BottomElectrode"
-  Target Boundaries(1) = 2
+  Target Boundaries(1) = 2     ! update IDs if yours differ
   Potential = 0.0
 End
 
 Boundary Condition 3
   Name = "TopElectrode"
-  Target Boundaries(1) = 1
+  Target Boundaries(1) = 1     ! update IDs if yours differ
   Potential = 10.0
 End
