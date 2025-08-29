@@ -1,60 +1,88 @@
 # Piezoelectric Cantilever Beam Energy Harvester
 
-**Objective:** Design and simulate a piezoelectric cantilever beam that turns vibration into voltage.
-- Show mechanical deformation → voltage output
-- Compare aluminium vs steel substrate
-- Plot voltage vs vibration frequency
+Finite element simulation in Python of a piezoelectric cantilever beam for vibration energy harvesting.  
+This project models the coupled electromechanical response of a cantilever beam with surface-mounted piezoelectric layers and predicts harvested voltage, current, power, and energy under different vibration conditions.
 
-## Project Overview
+---
 
-This project focuses on designing and analyzing a piezoelectric cantilever beam for energy harvesting applications. The cantilever beam will convert mechanical vibrations into electrical energy through the piezoelectric effect, demonstrating the relationship between mechanical deformation and voltage output.
+## Overview
 
-## Key Objectives
+Piezoelectric cantilevers are widely studied as energy harvesters for self-powered sensors and low-power electronics.  
+The goal of this project was to implement a complete computational pipeline for evaluating the mechanical and electrical response of such devices. The simulation workflow includes modal analysis, harmonic response, transient response under base excitation, and electrical circuit coupling through an external resistive load. Post-processing routines provide quantitative measures of harvested energy and performance maps across operating conditions.
 
-1. **Mechanical-Electrical Coupling**: Demonstrate how mechanical deformation translates to voltage output
-2. **Material Comparison**: Analyze performance differences between aluminium and steel substrates
-3. **Frequency Response**: Plot voltage output versus vibration frequency to identify optimal operating conditions
+---
 
-## Technical Specifications
+## Features
 
-- **Beam Dimensions**: 50 × 10 × 1 mm (length × width × thickness)
-- **Piezoelectric Layer**: 0.2 mm thickness on top surface
-- **Substrate Materials**: Aluminium and Steel for comparison
-- **Analysis Type**: Piezoelectric coupling simulation
+- **Finite Element Modeling (FEM)** with [SfePy](http://sfepy.org/)  
+- **Analyses implemented:**
+  - Modal analysis (natural frequencies and mode shapes)
+  - Static response (boundary condition and coupling check)
+  - Harmonic sweep (frequency response and resonance amplification)
+  - Circuit coupling with resistive loads
+  - Transient response with multiple excitation types (sinusoidal, step, random)
+- **Post-processing:**
+  - Time-series of displacement, voltage, current, and power
+  - Cumulative harvested energy (time-integrated power)
+  - FFT spectra of displacement and voltage
+  - Parametric sweeps (frequency × resistance) with summary tables and heatmaps
 
-## Milestone 0 – Setup Checklist
+---
 
-**Software Requirements (tick if you have it):**
-- [ ] SolidWorks installed (use OnShape for free version)
-- [ ] ANSYS Workbench (with Piezo coupling) installed
-- [ ] A place to save results (this folder)
+## Example Results
 
-## Next Steps
+- Frequency response curves
+- Transient waveforms of voltage and displacement
+- Cumulative energy harvested over time
+- Heatmap of maximum power versus frequency and resistance
 
-**Immediate Action Required:**
-Create a simple rectangular cantilever (50×10×1 mm) in CAD with a 0.2 mm piezo layer on top and export a STEP file.
+*(Example plots from `results/` can be embedded here to illustrate outputs.)*
 
-## Project Structure
+---
 
-```
-Piezo_Cantilever/
-├── README.md
-├── CAD/                    # SolidWorks files and STEP exports
-├── Simulation/             # ANSYS simulation files
-├── Results/                # Analysis results and plots
-└── Documentation/          # Additional project documentation
-```
+## Repository Structure
 
-## Expected Deliverables
+01_modal.py # Modal analysis
+02_static.py # Static check
+03_harmonic_base.py # Harmonic response
+04_circuit_coupling.py # Circuit coupling sweep
+05_transient.py # Transient response (sin/step/random)
+06_sweep_summary.py # Parametric sweeps + summary aggregation
+CAD/exports/ # Mesh files (Gmsh exports)
+results/ # Example output data and plots
 
-1. **CAD Model**: SolidWorks assembly with cantilever beam and piezoelectric layer
-2. **Simulation Results**: ANSYS analysis showing deformation and voltage output
-3. **Performance Comparison**: Aluminium vs Steel substrate analysis
-4. **Frequency Response**: Voltage vs frequency plots
-5. **Technical Report**: Summary of findings and recommendations
+yaml
+코드 복사
 
-## Notes
+---
 
-- Ensure proper piezoelectric material properties are defined in ANSYS
-- Consider boundary conditions and loading scenarios
-- Document all simulation parameters for reproducibility
+## Dependencies
+
+- Python 3.10+
+- [SfePy](http://sfepy.org/) (Finite Element framework)
+- NumPy
+- SciPy
+- Matplotlib
+- Pandas
+
+Install all dependencies with:
+
+```bash
+pip install sfepy numpy scipy matplotlib pandas
+Running the Code
+Clone the repository and navigate into the project folder.
+
+Run any script, for example:
+
+
+python transient.py
+Results (plots and CSV files) are saved to the working directory or into results/.
+
+For parametric studies, run:
+
+python sweep_summary.py
+This generates a sweep_summary.csv, line plots, and heatmaps.
+
+Motivation
+Vibration energy harvesting is an important research area for enabling autonomous and low-power devices. Piezoelectric cantilevers are one of the most common designs due to their simplicity and high electromechanical coupling.
+This project demonstrates a complete simulation workflow for evaluating such harvesters, from mechanical vibrations to electrical output and harvested energy. It highlights the integration of finite element methods, dynamic simulation, and circuit modeling in a single Python framework.
