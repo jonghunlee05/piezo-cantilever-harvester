@@ -51,8 +51,6 @@ The goal of this project was to implement a complete computational pipeline for 
 CAD/exports/ # Mesh files (Gmsh exports)
 results/ # Example output data and plots
 
-yaml
-코드 복사
 
 ---
 
