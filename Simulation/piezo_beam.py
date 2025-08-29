@@ -88,6 +88,29 @@ try:
     
     mat_pzt = Material('Piezo', D=D_pzt, e=e_matrix, epsilon=epsilon, rho=7500.0)
     print("✅ Materials created")
+    
+    # Debug: Check material properties
+    print("🔍 Debug: Material properties verification:")
+    print(f"   - Substrate Young's modulus: {200e9:.2e} Pa")
+    print(f"   - PZT Young's modulus: {60e9:.2e} Pa")
+    print(f"   - PZT piezoelectric e-matrix:")
+    print(f"     e31: {e_matrix[2,0]:.2e} C/m²")
+    print(f"     e32: {e_matrix[2,1]:.2e} C/m²")
+    print(f"     e33: {e_matrix[2,2]:.2e} C/m²")
+    print(f"     e15: {e_matrix[0,4]:.2e} C/m²")
+    print(f"     e24: {e_matrix[1,3]:.2e} C/m²")
+    print(f"   - PZT relative permittivity: {1700}")
+    print(f"   - PZT absolute permittivity: {8.85e-12 * 1700:.2e} F/m")
+    
+    # Check if PZT coefficients are reasonable
+    print(f"   - PZT coefficients range: [{np.min(np.abs(e_matrix)):.2e}, {np.max(np.abs(e_matrix)):.2e}] C/m²")
+    if np.max(np.abs(e_matrix)) < 1e-12:
+        print("   ⚠️  Warning: PZT coefficients seem very small!")
+    elif np.max(np.abs(e_matrix)) < 1e-9:
+        print("   ⚠️  Warning: PZT coefficients seem small!")
+    else:
+        print("   ✅ PZT coefficients appear reasonable")
+        
 except Exception as e:
     print(f"❌ Error creating materials: {e}")
     exit(1)
@@ -117,6 +140,24 @@ try:
     eqs = Equations([eq_mech, eq_elec])
     
     print("✅ Equations created")
+    
+    # Debug: Check equation assembly
+    print("🔍 Debug: Equation assembly verification:")
+    print(f"   - Mechanical equation: {eq_mech}")
+    print(f"   - Electrical equation: {eq_elec}")
+    print(f"   - Total equations: {len(eqs)}")
+    
+    # Check term contributions
+    print(f"   - Substrate elastic term: {t_sub}")
+    print(f"   - PZT elastic term: {t_pzt}")
+    print(f"   - Piezoelectric coupling term 1: {t_c_vphi}")
+    print(f"   - Piezoelectric coupling term 2: {t_c_upsi}")
+    print(f"   - Dielectric term: {t_eps}")
+    
+    # Verify integration regions
+    print(f"   - Substrate integration region: {substrate}")
+    print(f"   - PZT integration region: {piezo}")
+    
 except Exception as e:
     print(f"❌ Error creating equations: {e}")
     exit(1)
@@ -132,6 +173,19 @@ try:
     
     bcs = Conditions([fix, pot0, potV])
     print("✅ Boundary conditions set")
+    
+    # Debug: Check boundary condition details
+    print("🔍 Debug: Boundary condition verification:")
+    print(f"   - Clamp region size: {len(clamp.entities[0])} elements")
+    print(f"   - Bottom electrode size: {len(bottom.entities[0])} elements")
+    print(f"   - Top electrode size: {len(top.entities[0])} elements")
+    print(f"   - Total BCs: {len(bcs)}")
+    
+    # Check if regions have the expected properties
+    print(f"   - Clamp region: {clamp}")
+    print(f"   - Bottom electrode: {bottom}")
+    print(f"   - Top electrode: {top}")
+    
 except Exception as e:
     print(f"❌ Error creating boundary conditions: {e}")
     exit(1)
@@ -152,6 +206,23 @@ try:
     
     pb.time_update(ebcs=bcs)
     print("✅ Problem and solvers configured")
+    
+    # Debug: Check matrix assembly
+    print("🔍 Debug: Matrix assembly verification:")
+    print(f"   - Problem type: {type(pb)}")
+    print(f"   - Is linear: {pb.is_linear()}")
+    print(f"   - Has equations: {pb.equations is not None}")
+    
+    # Check if we can access matrix information
+    try:
+        if hasattr(pb, 'mtx_a') and pb.mtx_a is not None:
+            print(f"   - System matrix shape: {pb.mtx_a.shape}")
+            print(f"   - System matrix type: {type(pb.mtx_a)}")
+        else:
+            print("   - System matrix not yet assembled")
+    except Exception as e:
+        print(f"   - Matrix info not accessible: {e}")
+        
 except Exception as e:
     print(f"❌ Error setting up problem: {e}")
     exit(1)
