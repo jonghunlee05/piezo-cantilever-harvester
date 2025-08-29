@@ -15,7 +15,7 @@ print("🔍 Starting sfepy piezoelectric cantilever simulation...")
 # ------------------------------------------------------------------
 print("📁 Loading mesh file...")
 try:
-    mesh = Mesh.from_file('../CAD/exports/beam_piezo_v2.msh')
+    mesh = Mesh.from_file('../CAD/exports/beam_piezo_v3.mesh')
     print(f"✅ Mesh loaded: {len(mesh.coors)} vertices")
 except Exception as e:
     print(f"❌ Error loading mesh: {e}")
@@ -36,12 +36,28 @@ print("📍 Creating regions...")
 
 try:
     Omega = domain.create_region('Omega', 'all')
-    substrate = domain.create_region('Substrate', 'cells of group 2')
-    piezo = domain.create_region('Piezo', 'cells of group 4')
-    top = domain.create_region('TopElectrode', 'cells of group 1')
-    bottom = domain.create_region('BottomElectrode', 'cells of group 3')
-    clamp = domain.create_region('Clamp', 'cells of group 5')
+    substrate = domain.create_region('Substrate', 'cells of group 25')
+    piezo = domain.create_region('Piezo', 'cells of group 26')
+    top = domain.create_region('TopElectrode', 'cells of group 27')
+    bottom = domain.create_region('BottomElectrode', 'cells of group 28')
+    clamp = domain.create_region('Clamp', 'cells of group 29')
     print("✅ All regions created successfully")
+    
+    # Display mesh group information
+    print("\n📊 Mesh group info:")
+    try:
+        if hasattr(mesh, 'descs'):
+            print(f"  Mesh descs type: {type(mesh.descs)}")
+            print(f"  Mesh descs: {mesh.descs}")
+        if hasattr(mesh, 'groups'):
+            print(f"  Mesh groups type: {type(mesh.groups)}")
+            print(f"  Mesh groups: {mesh.groups}")
+        if hasattr(mesh, 'cmesh'):
+            print(f"  CMesh groups: {mesh.cmesh.groups if hasattr(mesh.cmesh, 'groups') else 'No groups'}")
+    except Exception as e:
+        print(f"  Could not access mesh group info: {e}")
+    
+    # ------------------------------------------------------------------
 except Exception as e:
     print(f"❌ Error creating regions: {e}")
     exit(1)
@@ -76,40 +92,22 @@ try:
     # Piezo: PZT-5H
     D_pzt = stiffness_from_youngpoisson(3, 60e9, 0.31)
     
-    # Piezoelectric e-matrix [C/m²]
+    # Piezoelectric e-matrix [C/m²], poling along global 3-axis (thickness)
+    e_15, e_31, e_33 = 12.3, -6.5, 23.3  # ~PZT-5H ballpark
     e_matrix = np.array([
-        [0.0, 0.0, 0.0, 0.0, 4.6e-10, 0.0],
-        [0.0, 0.0, 0.0, 4.6e-10, 0.0, 0.0],
-        [-1.9e-10, -1.9e-10, 3.9e-10, 0.0, 0.0, 0.0]
-    ])
+        [0.0, 0.0, 0.0, 0.0,  e_15, 0.0],
+        [0.0, 0.0, 0.0,  e_15, 0.0,  0.0],
+        [e_31, e_31, e_33, 0.0, 0.0,  0.0]
+    ], dtype=np.float64)
     
-    # Relative permittivity * vacuum permittivity
-    epsilon = np.eye(3) * (8.85e-12 * 1700)
+    # Relative permittivity (z/thickness usually higher)
+    eps_r = np.array([1500.0, 1500.0, 1700.0])
+    epsilon = np.diag(eps_r) * 8.8541878128e-12
     
     mat_pzt = Material('Piezo', D=D_pzt, e=e_matrix, epsilon=epsilon, rho=7500.0)
     print("✅ Materials created")
     
-    # Debug: Check material properties
-    print("🔍 Debug: Material properties verification:")
-    print(f"   - Substrate Young's modulus: {200e9:.2e} Pa")
-    print(f"   - PZT Young's modulus: {60e9:.2e} Pa")
-    print(f"   - PZT piezoelectric e-matrix:")
-    print(f"     e31: {e_matrix[2,0]:.2e} C/m²")
-    print(f"     e32: {e_matrix[2,1]:.2e} C/m²")
-    print(f"     e33: {e_matrix[2,2]:.2e} C/m²")
-    print(f"     e15: {e_matrix[0,4]:.2e} C/m²")
-    print(f"     e24: {e_matrix[1,3]:.2e} C/m²")
-    print(f"   - PZT relative permittivity: {1700}")
-    print(f"   - PZT absolute permittivity: {8.85e-12 * 1700:.2e} F/m")
-    
-    # Check if PZT coefficients are reasonable
-    print(f"   - PZT coefficients range: [{np.min(np.abs(e_matrix)):.2e}, {np.max(np.abs(e_matrix)):.2e}] C/m²")
-    if np.max(np.abs(e_matrix)) < 1e-12:
-        print("   ⚠️  Warning: PZT coefficients seem very small!")
-    elif np.max(np.abs(e_matrix)) < 1e-9:
-        print("   ⚠️  Warning: PZT coefficients seem small!")
-    else:
-        print("   ✅ PZT coefficients appear reasonable")
+
         
 except Exception as e:
     print(f"❌ Error creating materials: {e}")
@@ -141,23 +139,6 @@ try:
     
     print("✅ Equations created")
     
-    # Debug: Check equation assembly
-    print("🔍 Debug: Equation assembly verification:")
-    print(f"   - Mechanical equation: {eq_mech}")
-    print(f"   - Electrical equation: {eq_elec}")
-    print(f"   - Total equations: {len(eqs)}")
-    
-    # Check term contributions
-    print(f"   - Substrate elastic term: {t_sub}")
-    print(f"   - PZT elastic term: {t_pzt}")
-    print(f"   - Piezoelectric coupling term 1: {t_c_vphi}")
-    print(f"   - Piezoelectric coupling term 2: {t_c_upsi}")
-    print(f"   - Dielectric term: {t_eps}")
-    
-    # Verify integration regions
-    print(f"   - Substrate integration region: {substrate}")
-    print(f"   - PZT integration region: {piezo}")
-    
 except Exception as e:
     print(f"❌ Error creating equations: {e}")
     exit(1)
@@ -173,18 +154,6 @@ try:
     
     bcs = Conditions([fix, pot0, potV])
     print("✅ Boundary conditions set")
-    
-    # Debug: Check boundary condition details
-    print("🔍 Debug: Boundary condition verification:")
-    print(f"   - Clamp region size: {len(clamp.entities[0])} elements")
-    print(f"   - Bottom electrode size: {len(bottom.entities[0])} elements")
-    print(f"   - Top electrode size: {len(top.entities[0])} elements")
-    print(f"   - Total BCs: {len(bcs)}")
-    
-    # Check if regions have the expected properties
-    print(f"   - Clamp region: {clamp}")
-    print(f"   - Bottom electrode: {bottom}")
-    print(f"   - Top electrode: {top}")
     
 except Exception as e:
     print(f"❌ Error creating boundary conditions: {e}")
@@ -207,22 +176,6 @@ try:
     pb.time_update(ebcs=bcs)
     print("✅ Problem and solvers configured")
     
-    # Debug: Check matrix assembly
-    print("🔍 Debug: Matrix assembly verification:")
-    print(f"   - Problem type: {type(pb)}")
-    print(f"   - Is linear: {pb.is_linear()}")
-    print(f"   - Has equations: {pb.equations is not None}")
-    
-    # Check if we can access matrix information
-    try:
-        if hasattr(pb, 'mtx_a') and pb.mtx_a is not None:
-            print(f"   - System matrix shape: {pb.mtx_a.shape}")
-            print(f"   - System matrix type: {type(pb.mtx_a)}")
-        else:
-            print("   - System matrix not yet assembled")
-    except Exception as e:
-        print(f"   - Matrix info not accessible: {e}")
-        
 except Exception as e:
     print(f"❌ Error setting up problem: {e}")
     exit(1)
@@ -233,6 +186,7 @@ except Exception as e:
 print("🚀 Starting solver...")
 try:
     status = IndexedStruct()
+    
     state = pb.solve(status=status)
     
     # Check if we have solution data
@@ -268,7 +222,7 @@ try:
         print(f"📊 Nonlinear solver iterations: {status.nls_status.n_iter}")
     if hasattr(status, 'ls_status'):
         print(f"📊 Linear solver iterations: {status.ls_status.n_iter}")
-        
+    
 except Exception as e:
     print(f"❌ Error during solving: {e}")
     exit(1)
