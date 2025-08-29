@@ -195,21 +195,28 @@ try:
         print(f"   - Displacement DOFs: {state['u'].n_dof}")
         print(f"   - Potential DOFs: {state['phi'].n_dof}")
         
-        # Check if solution values are non-zero
+        # Inspect full-field maxima correctly
         u_var = state['u']
         phi_var = state['phi']
         
-        if hasattr(u_var, 'data') and u_var.data is not None and len(u_var.data) > 0:
-            u_data = u_var.data[0]
-            u_max = np.max(np.abs(u_data)) if u_data is not None else 0
-            print(f"   - Max displacement: {u_max:.2e}")
+        if hasattr(u_var, 'data') and u_var.data is not None:
+            # Get the full displacement data array and convert to numpy
+            u_data = np.array(u_var.data)
+            if u_data.ndim > 1:
+                # For vector field, calculate magnitude at each node
+                u_mag_max = np.linalg.norm(u_data, axis=1).max()
+                print(f"   - Max |u| (vector magnitude): {u_mag_max:.3e} m")
+            else:
+                # For scalar field, just take max absolute value
+                u_abs_max = np.abs(u_data).max()
+                print(f"   - Max |u|: {u_abs_max:.3e} m")
         else:
             print("   - Displacement data not available")
-            
-        if hasattr(phi_var, 'data') and phi_var.data is not None and len(phi_var.data) > 0:
-            phi_data = phi_var.data[0]
-            phi_max = np.max(np.abs(phi_data)) if phi_data is not None else 0
-            print(f"   - Max potential: {phi_max:.2e}")
+
+        if hasattr(phi_var, 'data') and phi_var.data is not None:
+            phi_data = np.array(phi_var.data)
+            phi_abs_max = np.abs(phi_data).max()
+            print(f"   - Max |phi|: {phi_abs_max:.3e} V")
         else:
             print("   - Potential data not available")
     else:
