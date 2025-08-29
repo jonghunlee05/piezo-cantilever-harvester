@@ -162,73 +162,31 @@ except Exception as e:
 print("🚀 Starting solver...")
 try:
     status = IndexedStruct()
-    
-    # Debug: Check problem state before solving
-    print("🔍 Debug: Problem state before solving:")
-    print(f"   - Problem type: {type(pb)}")
-    print(f"   - Is linear: {pb.is_linear()}")
-    print(f"   - Has equations: {pb.equations is not None}")
-    
     state = pb.solve(status=status)
-    
-    # Debug: Investigate what solve() returned
-    print("🔍 Debug: After solving:")
-    print(f"   - State object: {state}")
-    print(f"   - State type: {type(state)}")
-    print(f"   - Status object: {status}")
     
     # Check if we have solution data
     if state is not None:
         print("✅ Solution computed successfully!")
+        print(f"   - Displacement DOFs: {state['u'].n_dof}")
+        print(f"   - Potential DOFs: {state['phi'].n_dof}")
         
-        # Debug: Check the actual solution data structure
-        print("🔍 Debug: Solution data investigation:")
-        print(f"   - State names: {state.names}")
-        print(f"   - State variables: {state.state}")
-        print(f"   - State vector shape: {state.vec.shape}")
-        
-        # Access displacement data correctly
+        # Check if solution values are non-zero
         u_var = state['u']
         phi_var = state['phi']
         
-        print(f"   - Displacement variable: {u_var}")
-        print(f"   - Potential variable: {phi_var}")
-        print(f"   - Displacement DOFs: {u_var.n_dof}")
-        print(f"   - Potential DOFs: {phi_var.n_dof}")
-        
-        # Check if data arrays exist and their content
-        if hasattr(u_var, 'data') and u_var.data is not None:
-            print(f"   - Displacement data type: {type(u_var.data)}")
-            print(f"   - Displacement data length: {len(u_var.data)}")
-            if len(u_var.data) > 0 and u_var.data[0] is not None:
-                u_data = u_var.data[0]
-                print(f"   - Displacement data shape: {u_data.shape}")
-                print(f"   - Displacement data type: {u_data.dtype}")
-                print(f"   - Displacement data range: [{np.min(u_data):.2e}, {np.max(u_data):.2e}]")
-                print(f"   - Displacement data non-zero count: {np.count_nonzero(u_data)}")
-            else:
-                print("   - Displacement data[0] is None")
+        if hasattr(u_var, 'data') and u_var.data is not None and len(u_var.data) > 0:
+            u_data = u_var.data[0]
+            u_max = np.max(np.abs(u_data)) if u_data is not None else 0
+            print(f"   - Max displacement: {u_max:.2e}")
         else:
-            print("   - No displacement data attribute")
+            print("   - Displacement data not available")
             
-        if hasattr(phi_var, 'data') and phi_var.data is not None:
-            print(f"   - Potential data type: {type(phi_var.data)}")
-            print(f"   - Potential data length: {len(phi_var.data)}")
-            if len(phi_var.data) > 0 and phi_var.data[0] is not None:
-                phi_data = phi_var.data[0]
-                print(f"   - Potential data shape: {phi_data.shape}")
-                print(f"   - Potential data type: {phi_data.dtype}")
-                print(f"   - Potential data range: [{np.min(phi_data):.2e}, {np.max(phi_data):.2e}]")
-                print(f"   - Potential data non-zero count: {np.count_nonzero(phi_data)}")
-            else:
-                print("   - Potential data[0] is None")
+        if hasattr(phi_var, 'data') and phi_var.data is not None and len(phi_var.data) > 0:
+            phi_data = phi_var.data[0]
+            phi_max = np.max(np.abs(phi_data)) if phi_data is not None else 0
+            print(f"   - Max potential: {phi_max:.2e}")
         else:
-            print("   - No potential data attribute")
-            
-        # Check the actual solution vector
-        print(f"   - Solution vector shape: {state.vec.shape}")
-        print(f"   - Solution vector range: [{np.min(state.vec):.2e}, {np.max(state.vec):.2e}]")
-        print(f"   - Solution vector non-zero count: {np.count_nonzero(state.vec)}")
+            print("   - Potential data not available")
     else:
         print("⚠️  Warning: Solver returned None")
     
@@ -249,17 +207,8 @@ except Exception as e:
 # ------------------------------------------------------------------
 print("💾 Saving results...")
 
-# Debug: Investigate saving options
-print("🔍 Debug: Investigating save options...")
-print(f"   - State object type: {type(state)}")
-if state is not None:
-    print(f"   - Available variables: {state.names}")
-    print(f"   - State variables: {state.state}")
-    print(f"   - Problem variables: {pb.get_variables()}")
-
 try:
-    # Method 1: Try saving with the state object
-    print("   - Attempting save with state object...")
+    # Try saving with the state object
     pb.save_state('piezo_beam.vtk', state=state)
     print("✅ Results saved to 'piezo_beam.vtk'")
     print("📊 Open 'piezo_beam.vtk' in ParaView to visualize results")
@@ -269,23 +218,20 @@ except Exception as e:
     print("💡 Trying alternative save method...")
     
     try:
-        # Method 2: Try saving without specifying state
-        print("   - Attempting save without state...")
+        # Try saving without specifying state
         pb.save_state('piezo_beam.vtk')
         print("✅ Results saved using default method")
         
     except Exception as e2:
         print(f"❌ Default save also failed: {e2}")
         
-        # Method 3: Try using problem's built-in output
-        print("🔍 Debug: Trying built-in output methods...")
+        # Try using problem's built-in output
+        print("🔍 Trying built-in output methods...")
         try:
             if hasattr(pb, 'setup_output'):
-                print("   - Setting up output directory...")
                 pb.setup_output(output_dir='./', output_format='vtk')
-                print("   - Output setup completed")
+                print("✅ Output setup completed")
                 
-                # Try to save using the setup output
                 if hasattr(pb, 'save_output'):
                     pb.save_output('piezo_beam_output')
                     print("✅ Results saved using output method")
@@ -298,27 +244,15 @@ except Exception as e:
             print(f"❌ Output setup failed: {e3}")
             print("💡 Results computed but not saved - manual extraction needed")
             
-            # Last resort: Try to manually extract and save
+            # Last resort: Manual data extraction
             if state is not None:
-                print("🔍 Debug: Attempting manual data extraction...")
+                print("🔍 Attempting manual data extraction...")
                 try:
-                    # Extract displacement and potential data using correct methods
                     u_var = state['u']
                     phi_var = state['phi']
                     
-                    print(f"   - Displacement variable type: {type(u_var)}")
-                    print(f"   - Potential variable type: {type(phi_var)}")
-                    
-                    # Check if we can access the solution vector directly
                     if hasattr(state, 'vec') and state.vec is not None:
                         print(f"   - Solution vector available: {state.vec.shape}")
-                        
-                        # Try to understand the DOF mapping
-                        if hasattr(u_var, 'indx') and u_var.indx is not None:
-                            print(f"   - Displacement DOF indices: {u_var.indx}")
-                        if hasattr(phi_var, 'indx') and phi_var.indx is not None:
-                            print(f"   - Potential DOF indices: {phi_var.indx}")
-                            
                         print("   - Manual extraction successful - need to implement VTK writer")
                     else:
                         print("   - No solution vector available")
